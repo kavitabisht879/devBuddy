@@ -1,0 +1,19 @@
+{
+  "name": "devbuddybakend",
+  "version": "1.0.0",
+  "description": "devbuddy",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [
+    "nodejs",
+    "js"
+  ],
+  "author": "kavita",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
