@@ -1,5 +1,4 @@
-//  in front end part use redux toolkit  for this application
-// -57
+//  in front end part use redux toolkit for state and rtk query for api data for this application
 
 const express = require("express");
 const connectDB = require("./config/database");
@@ -57,7 +56,6 @@ app.get("/feed", async (req, res) => {
   }
 });
 
-
 app.delete("/user", async (req, res) => {
   const userId = req.body.userId;
 
@@ -70,14 +68,27 @@ app.delete("/user", async (req, res) => {
   }
 });
 
-app.patch("/user" , async(req,res)=>{
-  const userId = req.body.userId;
-  const data = req.body
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  const data = req.body;
   try {
-    const user = await User.findByIdAndUpdate(userId,data)
+    const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age", "skills"];
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATES.includes(k)
+    );
+    if(!isUpdateAllowed){
+      throw new Error("update not allowed")
+    }
+    if (data.skills && data.skills.length > 10) {
+      throw new Error("Too many skills (max 10)");
+    }
+        const user = await User.findByIdAndUpdate(userId, data, {
+      returnDocument: "after",
+      runValidators: true,
+    });
     console.log(user);
-    res.send("user updated successfully")
+    res.send("user updated successfully");
   } catch (error) {
-    res.status(400).send("something went wrong ")
+    res.status(400).send(`Update failed: ${error.message}`);
   }
-})
+});
