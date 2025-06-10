@@ -1,7 +1,8 @@
 //  in front end part use redux toolkit for state and rtk query for api data for this application
-//  -20:00
+// -1:07
 const express = require("express");
 const connectDB = require("./config/database");
+const jwt = require("jsonwebtoken");
 const app = express();
 const User = require("./models/user");
 const { validaeSignupData } = require("./utills/validation");
@@ -56,14 +57,43 @@ app.post("/login", async (req, res) => {
     }
     console.log("passwordHash:", password);
 
-    const isValidPassword = await bcrypt.compare(password ,user.password)
-    if(!isValidPassword){
-      return res.status(401).send("invalid credentials")
+    const isValidPassword = await bcrypt.compare(
+      password,
+      isValidUser.password
+    );
+    if (!isValidPassword) {
+      return res.status(401).send("invalid credentials");
     }
-    res.status(200).send("login successful");
+    const token = await jwt.sign({ _id: isValidUser._id }, "DEV@123");
 
+    res.cookie("token", token);
+    res.status(200).send("login successful");
   } catch (error) {
     res.status(400).send("something went wrong");
+  }
+});
+
+// get profile
+app.get("/profile", async (req, res) => {
+  try {
+    const { token } = req.cookies;
+
+    if (!token) {
+      return res.status(401).send("Access denied. No token provided.");
+    }
+
+    const decoded = jwt.verify(token, "DEV@123"); // no `await`, because verify is sync by default
+    const { _id } = decoded;
+
+    const user = await User.findById(_id).select("-password"); // optional: remove password from response
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    res.send(user);
+  } catch (error) {
+    console.error("Error verifying token:", error);
+    res.status(401).send("Invalid token");
   }
 });
 
