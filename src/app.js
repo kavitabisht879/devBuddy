@@ -1,13 +1,15 @@
 //  in front end part use redux toolkit for state and rtk query for api data for this application
-// -1:07
+// -3
 const express = require("express");
 const connectDB = require("./config/database");
+const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const app = express();
 const User = require("./models/user");
 const { validaeSignupData } = require("./utills/validation");
 const bcrypt = require("bcrypt");
 const user = require("./models/user");
+const { userAuth } = require("./middlewares/auth");
 
 connectDB()
   .then(() => {
@@ -21,6 +23,7 @@ connectDB()
   });
 
 app.use(express.json());
+app.use(cookieParser());
 
 //  create user api
 app.post("/signup", async (req, res) => {
@@ -64,9 +67,13 @@ app.post("/login", async (req, res) => {
     if (!isValidPassword) {
       return res.status(401).send("invalid credentials");
     }
-    const token = await jwt.sign({ _id: isValidUser._id }, "DEV@123");
+    const token = await jwt.sign({ _id: isValidUser._id }, "DEV@123", {
+      expiresIn: "7d",
+    });
 
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 8 * 3600000),
+    });
     res.status(200).send("login successful");
   } catch (error) {
     res.status(400).send("something went wrong");
@@ -74,88 +81,18 @@ app.post("/login", async (req, res) => {
 });
 
 // get profile
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const { token } = req.cookies;
-
-    if (!token) {
-      return res.status(401).send("Access denied. No token provided.");
-    }
-
-    const decoded = jwt.verify(token, "DEV@123"); // no `await`, because verify is sync by default
-    const { _id } = decoded;
-
-    const user = await User.findById(_id).select("-password"); // optional: remove password from response
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-
+    const user = req.user;
     res.send(user);
   } catch (error) {
-    console.error("Error verifying token:", error);
     res.status(401).send("Invalid token");
   }
 });
 
-//  get user by email_id
-
-app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
-  try {
-    const users = await User.find({ emailId: userEmail });
-    if (users.length === 0) {
-      res.status(404).send("User not Found");
-    } else {
-      res.send(users);
-    }
-  } catch (error) {
-    res.status(400).send("something went wrong");
-  }
-});
-
-//  get all user
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-    res.send(users);
-  } catch (error) {
-    res.status(400).send("something went wrong");
-  }
-});
-
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-
-  try {
-    // const user= await User.findByIdAndDelete({_id:userId})
-    const user = await User.findByIdAndDelete(userId);
-    res.send("user deleted successfully");
-  } catch (error) {
-    res.status(400).send("something went wrong");
-  }
-});
-
-app.patch("/user/:userId", async (req, res) => {
-  const userId = req.params.userId;
-  const data = req.body;
-  try {
-    const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age", "skills"];
-    const isUpdateAllowed = Object.keys(data).every((k) =>
-      ALLOWED_UPDATES.includes(k)
-    );
-    if (!isUpdateAllowed) {
-      throw new Error("update not allowed");
-    }
-    if (data.skills && data.skills.length > 10) {
-      throw new Error("Too many skills (max 10)");
-    }
-    const user = await User.findByIdAndUpdate(userId, data, {
-      returnDocument: "after",
-      runValidators: true,
-    });
-    console.log(user);
-    res.send("user updated successfully");
-  } catch (error) {
-    res.status(400).send(`Update failed: ${error.message}`);
-  }
+//  send connection request
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  const user = req.user;
+  console.log("sending connection request");
+  res.send(user.firstName + " sent the connection request!");
 });
