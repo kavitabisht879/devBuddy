@@ -54,7 +54,44 @@ requestRouter.post(
     }
   }
 );
+// accecpted or rejected request
 
+requestRouter.post(
+  "/request/review/:status/:requestId",
+  userAuth,
+  async (req, res) => {
+    // kavita==>kriti
+    // loggedInUser = toUserId
+    // status = intersted
+    // requestid should be valid
+    try {
+      const loggedInUser = req.user;
+      const { status, requestId } = req.params;
+      const allowedStatus = ["accepted", "rejected"];
+      if (!allowedStatus.includes(status)) {
+        return res.status(400).json({ message: "status not allowed!" });
+      }
+      const connectionRequest = await ConnectionRequest.findOne({
+        _id:requestId,
+        toUserId:loggedInUser._id,
+        status:"interested",
+
+      })
+      if(!connectionRequest){
+        return res.status(404).json({message:"connection request not found"})
+      }
+      // changing the status which is coming from props 
+      connectionRequest.status=status
+
+      const data = await connectionRequest.save();
+      res.json({message:"connection request"+status.data});
+
+    } catch (error) {
+      res.status(400).send("ERROR:" + Error.message);
+    }
+  }
+);
 
 module.exports = { requestRouter };
+// api created test the api 
 // 1:30:10
