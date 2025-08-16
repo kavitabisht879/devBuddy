@@ -29,4 +29,3 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   }
 });
 module.exports = { profileRouter };
-// 1:13:30

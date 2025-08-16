@@ -50,7 +50,7 @@ requestRouter.post(
         data,
       });
     } catch (error) {
-      res.status(400).send("Error:" + err.message);
+      res.status(400).send("Error:" + error.message);
     }
   }
 );
@@ -71,21 +71,23 @@ requestRouter.post(
       if (!allowedStatus.includes(status)) {
         return res.status(400).json({ message: "status not allowed!" });
       }
-      const connectionRequest = await ConnectionRequest.findOne({
-        _id:requestId,
-        toUserId:loggedInUser._id,
-        status:"interested",
 
-      })
-      if(!connectionRequest){
-        return res.status(404).json({message:"connection request not found"})
+      
+      const connectionRequest = await ConnectionRequest.findOne({
+        _id: requestId,
+        toUserId: loggedInUser._id,
+        status: "interested",
+      });
+      if (!connectionRequest) {
+        return res
+          .status(404)
+          .json({ message: "connection request not found" });
       }
-      // changing the status which is coming from props 
-      connectionRequest.status=status
+      // changing the status which is coming from props
+      connectionRequest.status = status;
 
       const data = await connectionRequest.save();
-      res.json({message:"connection request"+status.data});
-
+      res.json({ message: `Connection request ${status} successfully.` });
     } catch (error) {
       res.status(400).send("ERROR:" + Error.message);
     }
@@ -93,5 +95,3 @@ requestRouter.post(
 );
 
 module.exports = { requestRouter };
-// api created test the api 
-// 1:30:10

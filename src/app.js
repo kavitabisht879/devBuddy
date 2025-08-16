@@ -3,17 +3,11 @@
 const express = require("express");
 const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
 const app = express();
-const User = require("./models/user");
-const { validaeSignupData } = require("./utills/validation");
-const bcrypt = require("bcrypt");
-const user = require("./models/user");
-const { userAuth } = require("./middlewares/auth");
 const { requestRouter } = require("./routes/request");
 const { profileRouter } = require("./routes/profile");
 const { authRouter } = require("./routes/auth");
-console.log(typeof authRouter); 
+const { userRouter } = require("./routes/user");
 
 connectDB()
   .then(() => {
@@ -30,3 +24,4 @@ app.use(cookieParser());
 app.use("/", authRouter);
 app.use("/", requestRouter);
 app.use("/", profileRouter);
+app.use("/", userRouter);
