@@ -8,20 +8,21 @@ const { requestRouter } = require("./routes/request");
 const { profileRouter } = require("./routes/profile");
 const { authRouter } = require("./routes/auth");
 const { userRouter } = require("./routes/user");
-
-connectDB()
-  .then(() => {
-    console.log("Database connection established");
-    app.listen(7777, () => {
-      console.log("server is runnning on port 7777...");
-    });
-  })
-  .catch((err) => {
-    console.log("Database cannot be connected");
-  });
 app.use(express.json());
 app.use(cookieParser());
+
+const port = 7003;
+
 app.use("/", authRouter);
 app.use("/", requestRouter);
 app.use("/", profileRouter);
 app.use("/", userRouter);
+connectDB();
+
+const server = app.listen(port, () => {
+  console.log(`server is running on port: ${port}`);
+});
+
+server.on("error", (err) => {
+  console.error("Server failed to start:", err.message);
+});
